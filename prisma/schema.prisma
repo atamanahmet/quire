@@ -1,0 +1,32 @@
+generator client {
+  provider = "prisma-client"
+  output   = "../app/generated/prisma"
+}
+
+datasource db {
+  provider = "postgresql"
+}
+
+model Page {
+  id        String   @id @default(cuid())
+  title     String
+  parentId  String?
+  parent    Page?    @relation("PageHierarchy", fields: [parentId], references: [id])
+  children  Page[]   @relation("PageHierarchy")
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+  blocks    Block[]
+}
+
+model Block {
+  id            String  @id @default(cuid())
+  pageId        String
+  page          Page    @relation(fields: [pageId], references: [id], onDelete: Cascade)
+  parentBlockId String?
+  parentBlock   Block?  @relation("BlockHierarchy", fields: [parentBlockId], references: [id])
+  childBlocks   Block[] @relation("BlockHierarchy")
+  type          String
+  content       Json
+  order         Float
+  properties    Json?
+}
