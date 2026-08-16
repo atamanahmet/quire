@@ -3,7 +3,11 @@ import type { Prisma } from "@/app/generated/prisma/client";
 import { jsonData, jsonError } from "@/lib/api-response";
 import { NotFoundError } from "@/lib/errors";
 import { prisma } from "@/lib/prisma";
-import { updateBlock } from "@/lib/services/block-service";
+import {
+  BlockNotFoundError,
+  deleteBlock,
+  updateBlock,
+} from "@/lib/services/block-service";
 
 const updateBlockSchema = z
   .object({
@@ -57,5 +61,21 @@ export async function PATCH(request: Request, context: RouteContext) {
 
     console.error(error);
     return jsonError("Failed to update block", 500, "INTERNAL_ERROR");
+  }
+}
+
+export async function DELETE(_request: Request, context: RouteContext) {
+  const { id } = await context.params;
+
+  try {
+    const block = await deleteBlock(prisma, id);
+    return jsonData({ id: block.id });
+  } catch (error) {
+    if (error instanceof BlockNotFoundError) {
+      return jsonError(error.message, 404, "NOT_FOUND");
+    }
+
+    console.error(error);
+    return jsonError("Failed to delete block", 500, "INTERNAL_ERROR");
   }
 }
